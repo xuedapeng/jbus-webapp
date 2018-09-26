@@ -1,0 +1,79 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="renderer" content="webkit|ie-comp|ie-stand">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<script type="text/javascript" src="../../static/js/vue.min.js"></script>
+<script type="text/javascript" src="../../lib/jquery/1.9.1/jquery.min.js"></script>
+<script type="text/javascript" src="../../static/h-ui/js/H-ui.min.js"></script>
+<script type="text/javascript" src="../../lib/layer/2.4/layer.js"></script>
+
+<link rel="stylesheet" type="text/css" href="../../static/h-ui/css/H-ui.min.css" />
+<link rel="stylesheet" type="text/css" href="../../static/h-ui.admin/css/H-ui.admin.css" />
+<link rel="stylesheet" type="text/css" href="../../lib/Hui-iconfont/1.0.8/iconfont.css" />
+<link rel="stylesheet" type="text/css" href="../../static/h-ui.admin/skin/default/skin.css" id="skin" />
+<link rel="stylesheet" type="text/css" href="../../static/h-ui.admin/css/style.css" />
+
+<style>
+  td {
+    padding:5px 5px 5px 0px
+  }
+
+</style>
+
+<title>branchDetail</title>
+</head>
+
+<div id="app" class="page-container" style="margin-top:-20px">
+
+    <table >
+      <tr>
+        <td colspan="2" >
+          <table>
+            <tr>
+              <td>
+                <span style="font-size:1.5em">管理单位详情</span>
+              </td>
+              <td align="right" >
+                  <i class="Hui-iconfont" style="font-size:1.5em;color:blue;cursor:pointer" @click="editBranch">
+                    &#xe60c;
+                  </i>
+                  <i class="Hui-iconfont" style="font-size:1.5em;color:blue;cursor:pointer" @click="delBranch">
+                    &#xe609;
+                  </i>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td width="100px" >
+          单位名称：
+        </td>
+        <td>
+          <input type="text" class="input-text radius size-M" v-model="branchName" readonly/>
+        </td>
+      </tr>
+      <tr>
+        <td valign="top">
+          描述：
+        </td>
+        <td>
+          <textarea type="text" class="textarea radius size-M" style="resize:none;"  v-model="description" readonly ></textarea>
+        </td>
+      </tr>
+    </table>
+
+
+</div>
+
+<script type="text/javascript" src="../common/constant.js?v=7"></script>
+<script type="text/javascript" src="../common/common.js?v=7"></script>
+<script type="text/javascript" src="branchDetail.js?v=10"></script>
+</body>
+</html>

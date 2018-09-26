@@ -1,0 +1,101 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="renderer" content="webkit|ie-comp|ie-stand">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<script type="text/javascript" src="../../static/js/vue.min.js"></script>
+<script type="text/javascript" src="../../lib/jquery/1.9.1/jquery.min.js"></script>
+<script type="text/javascript" src="../../static/h-ui/js/H-ui.min.js"></script>
+<script type="text/javascript" src="../../lib/layer/2.4/layer.js"></script>
+
+<link rel="stylesheet" type="text/css" href="../../static/h-ui/css/H-ui.min.css" />
+<link rel="stylesheet" type="text/css" href="../../static/h-ui.admin/css/H-ui.admin.css" />
+<link rel="stylesheet" type="text/css" href="../../lib/Hui-iconfont/1.0.8/iconfont.css" />
+<link rel="stylesheet" type="text/css" href="../../static/h-ui.admin/skin/default/skin.css" id="skin" />
+<link rel="stylesheet" type="text/css" href="../../static/h-ui.admin/css/style.css" />
+
+<style>
+  td {
+    padding:5px 5px 5px 0px
+  }
+</style>
+
+<title>userAdd</title>
+</head>
+
+<div id="app" class="page-container" style="margin-top:-20px">
+  <span style="font-size:1.5em">增加人员</span>
+  <br/><br/>
+  <table border="0">
+    <tr>
+      <td width="80px" >
+        <label>姓名：</label>
+      </td>
+      <td width="77%">
+        <input type="text" class="input-text radius size-M" placeholder="必填" v-model="nickName" />
+      </td>
+    </tr>
+    <tr>
+      <td >
+        <label>帐号（手机号）：</label>
+      </td>
+      <td>
+        <input type="text" class="input-text radius size-M" placeholder="必填" v-model="account" />
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+        <label>密码：</label>
+      </td>
+      <td>
+        <input type="password" class="input-text radius size-M" placeholder="必填" v-model="password" />
+      </td>
+    </tr>
+    <tr>
+      <td >
+        <label>所属单位：</label>
+      </td>
+      <td>
+        <input type="text" class="input-text radius size-M" readonly v-model="branchName" />
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+        <label for="ck-branchAdmin">操作权限：</label>
+      </td>
+      <td>
+        <input type="radio" id="one" value="1" v-model="branchRole">
+        <label for="one" title="只能查看水闸状态">查看</label> &nbsp;
+        <input type="radio" id="two" value="2" v-model="branchRole">
+        <label for="two" title="可以操作闸门">操控</label>&nbsp;
+        <input type="radio" id="three" value="3" v-model="branchRole">
+        <label for="three" title="管理部门人员和设备">管理</label>
+      </td>
+    </tr>
+    <tr height="100px">
+      <td colspan="2"  width="95%" >
+        <button @click="ok()" class="btn btn-primary-outline radius center">
+          增加
+        </button>
+        <button @click="reset()" class="btn btn-primary-outline radius center">
+          清空
+        </button>
+      </td>
+    </tr>
+  </table>
+  <div id="err" >
+    <font color="red">{{errorInfo}}</font>
+  </div>
+
+</div>
+
+<script type="text/javascript" src="../common/constant.js?v=7"></script>
+<script type="text/javascript" src="../common/common.js?v=8"></script>
+<script type="text/javascript" src="userAdd.js?v=6"></script>
+</body>
+</html>

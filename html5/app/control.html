@@ -1,0 +1,222 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="renderer" content="webkit|ie-comp|ie-stand">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<script type="text/javascript" src="../static/js/vue.min.js"></script>
+<script type="text/javascript" src="../lib/jquery/1.9.1/jquery.min.js"></script>
+<script type="text/javascript" src="../static/h-ui/js/H-ui.min.js"></script>
+<script type="text/javascript" src="../lib/layer/2.4/layer.js"></script>
+
+<link rel="stylesheet" type="text/css" href="../static/h-ui/css/H-ui.min.css" />
+<link rel="stylesheet" type="text/css" href="../static/h-ui.admin/css/H-ui.admin.css" />
+<link rel="stylesheet" type="text/css" href="../lib/Hui-iconfont/1.0.8/iconfont.css" />
+<link rel="stylesheet" type="text/css" href="../static/h-ui.admin/skin/default/skin.css" id="skin" />
+<link rel="stylesheet" type="text/css" href="../static/h-ui.admin/css/style.css" />
+
+<style>
+.clearfix:after{content:"\20";display:block;height:0;clear:both;visibility:hidden}.clearfix{zoom:1}
+.tabBar {border-bottom: 1px solid #ccc}
+.tabBar span {background-color: #fff; cursor: pointer;float: left;font-weight:normal;font-size: 1em;height: 30px;line-height: 30px;padding: 0 15px}
+.tabBar span.current{background-color: #ccc;color: #1C86EE}
+.tabCon {display: none}
+
+.cmdDiv {padding: 10px 0 10px 20px}
+.doorFrame {
+    background-image:url(../static/img/doorFrame_.png);
+    background-size:600px 400px;
+    background-repeat: no-repeat;
+    background-color:#F0F8FF;
+  }
+.doorDiv {
+  background-image:url(../static/img/door_.png);
+  background-repeat: no-repeat;
+  background-position: bottom center;
+}
+
+.infoLeft {
+  padding:5px 0px 5px 10px;
+  border-bottom: 5px solid #fff;
+}
+.infoRight {
+  padding:5px 10px 5px 0px;
+  border-bottom: 5px solid #fff;
+  text-align:right;
+}
+.control {
+  padding:5px 0px 5px 10px;
+  border-bottom: 5px solid #fff;
+  text-align:center;
+}
+
+</style>
+
+<title>会话</title>
+</head>
+
+<div id="app" class="page-container" >
+
+  <table style="border-top: 0px solid #EDEDED;border-bottom: 0px solid #EDEDED;">
+    <tr>
+      <td style="background-color:#f6f6f6;vertical-align:top;width:150px">
+          <table style="border-right: 10px solid #fff;" >
+            <tr>
+              <td style="width:80px;" class="control">
+                <button onclick="openControl()" class="btn btn-primary-outline radius center">
+                  开度控制
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td style="width:80px;" class="control">
+                <button onclick="flowControl()" class="btn btn-primary-outline radius center">
+                  流量控制
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td style="width:80px;" class="control">
+                <button onclick="totolControl()" class="btn btn-primary-outline radius center">
+                  总量控制
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td style="width:80px;" class="control">
+                <button v-on:click="stop()" class="btn btn-primary-outline radius center">
+                  紧急停止
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td style="width:80px;" class="control">
+                <button onclick="deviceInfo()" class="btn btn-primary-outline radius center">
+                  设备状态
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td style="width:80px;" class="control">
+                <button onclick="troubleAlert()" class="btn btn-primary-outline radius center">
+                  故障报警
+                </button>
+              </td>
+            </tr>
+
+          </table>
+      </td>
+      <td style="border-right: 10px solid #EDEDED;border-left: 10px solid #EDEDED;width:600px">
+        <table style="border-left: 10px solid #fff;border-right: 10px solid #fff;" >
+          <tr>
+            <td  class="doorFrame" style="height:400px;width:600px;vertical-align:top;text-align:center">
+              <div style="margin-top:22px" >
+                <h4 style="color:#FFFFFF;font-weight:bold" >
+                  {{doorName}}
+                  <img src="../static/img/signal_green.svg" />
+                </h4>
+
+              </div>
+              <div style="position:absolute;left:191px;top:240px;width:372px;height:140px;border: 0px solid #f00;">
+                  <div id="doorLabel" style="position:absolute;left:275px;top:110px;color:red;font-weight:bold">
+                    <label>{{realHeight}} m</label>
+                  </div>
+                  <div class="doorDiv" style="position:absolute;left:137px;top:130px;width:319px;height:10px;border: 0px solid #00f;">
+
+                  </div>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+      <td style="background-color:#f6f6f6;vertical-align:top;">
+          <table style="border-left: 10px solid #fff;" >
+              <tr>
+                <td class="infoLeft">
+                  当前开度：
+                </td>
+                <td class="infoRight">
+                  {{realHeight}} m
+                </td>
+              </tr>
+              <tr>
+                <td class="infoLeft">
+                  瞬时流量：
+                </td>
+                <td class="infoRight">
+                  {{instantFlow}} m³/s
+                </td>
+              </tr>
+              <tr>
+                  <td class="infoLeft">
+                    闸前水位：
+                  </td>
+                  <td class="infoRight">
+                    {{frontWaterline}} m
+                  </td>
+              </tr>
+              <tr>
+                  <td class="infoLeft">
+                    闸后水位：
+                  </td>
+                  <td class="infoRight">
+                    {{backWaterline}} m
+                  </td>
+              </tr>
+              <tr>
+                  <td class="infoLeft" colspan="2">
+                    现场图片：
+                    <div>
+                      <img  style="width:200px" src="../static/img/doorFrame_.png" />
+                    </div>
+                  </td>
+              </tr>
+          </table>
+      </td>
+    </tr>
+
+
+  </table>
+
+  <br/><br/><br/><br/><br/>
+  <div id="simulator" style="display:block">
+      闸门开度<input v-model="realHeight" type="text" class="input-text  size-S"  style="width:50px" placeholder="闸门开度"/>
+      瞬时流量<input v-model="instantFlow" type="text" class="input-text  size-S"  style="width:50px" placeholder="瞬时流量"/>
+      闸前水位<input v-model="frontWaterline" type="text" class="input-text  size-S"  style="width:50px" placeholder="闸前水位"/>
+      闸后水位<input v-model="backWaterline" type="text" class="input-text  size-S"  style="width:50px" placeholder="闸后水位"/>
+      输出电流<input v-model="electricCurrent" type="text" class="input-text  size-S"  style="width:50px" placeholder="输出电流"/>
+      输出电压<input v-model="electricVoltage" type="text" class="input-text  size-S"  style="width:50px" placeholder="输出电压"/>
+      电机运行时间<input v-model="runningTime" type="text" class="input-text  size-S"  style="width:50px" placeholder="电机运行时间"/>
+      电机累计运行时间<input v-model="totalRunningTime" type="text" class="input-text  size-S"  style="width:50px" placeholder="电机累计运行时间"/>
+  </div>
+
+    <div id="modal-openControl" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    	<div class="modal-dialog">
+    		<div class="modal-content radius">
+    			<div class="modal-header" style="height:20px;margin-top:-15px;">
+    				<h3 class="modal-title">开度控制</h3>
+    				<a class="close" data-dismiss="modal" aria-hidden="true" href="javascript:void();">×</a>
+    			</div>
+    			<div class="modal-body">
+            请设置闸门开度：
+            <input v-model="expectHeight" @input="oninputExpect" name="" type="text" placeholder="" class="input-text  size-M" style="width:50px" />
+            米(0～{{maxHeight}})
+    			</div>
+    			<div class="modal-footer">
+    				<button class="btn btn-primary" onclick="openControlConfirm()">确定</button>
+    				<button class="btn" data-dismiss="modal" aria-hidden="true">关闭</button>
+    			</div>
+    		</div>
+    	</div>
+    </div>
+</div>
+
+<script type="text/javascript" src="common/constant.js?v=6"></script>
+<script type="text/javascript" src="common/common.js?v=6"></script>
+<script type="text/javascript" src="control.js?v=40"></script>
+</body>
+</html>

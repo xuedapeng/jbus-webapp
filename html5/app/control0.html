@@ -1,0 +1,278 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="renderer" content="webkit|ie-comp|ie-stand">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<script src="../static/js/vue.min.js"></script>
+
+<link rel="stylesheet" type="text/css" href="../static/h-ui/css/H-ui.min.css" />
+<link rel="stylesheet" type="text/css" href="../static/h-ui.admin/css/H-ui.admin.css" />
+<link rel="stylesheet" type="text/css" href="../lib/Hui-iconfont/1.0.8/iconfont.css" />
+<link rel="stylesheet" type="text/css" href="../static/h-ui.admin/skin/default/skin.css" id="skin" />
+<link rel="stylesheet" type="text/css" href="../static/h-ui.admin/css/style.css" />
+<style>
+table {
+border-collapse: collapse;
+}
+th, td {
+padding: 0.3em 0.5em;
+}
+</style>
+
+<title>会话</title>
+</head>
+<body style="background-color:#F0F8FF;">
+
+
+<div id="app" class="page-container"  style="position:absolute;left:0px;top:0px">
+
+  <div style="background:#f5f5f5;width:200px;height:160px;border:2px solid grey;position:absolute;left:50px;top:40px" >
+    <table  >
+      <tr>
+        <td colspan="2">
+          <div class="switch size-M" data-on-label="自动" data-off-label="手动" style="width:178px">
+            <input type="checkbox" checked />
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td>
+            <input v-model="openHeight" @input="oninput" name="" type="text" placeholder="开度" class="input-text  size-M" style="width:50px" />
+            <label> 米</label>
+        </td>
+          <td> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              <button v-on:click="upDoor()" class="btn btn-success radius size-M right">
+                <label>上升 <label> ▲</button>
+          </td>
+      </tr>
+      <tr>
+        <td>
+            <button v-on:click="moveDoor()" class="btn btn-success radius size-M right">
+              <label>启动 <label> ▶︎</button>
+        </td>
+          <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              <button v-on:click="downDoor()" class="btn btn-success radius size-M right">
+                <label>下降 <label> ▼</button>
+          </td>
+      </tr>
+      <tr>
+        <td colspan="2">
+            <button v-on:click="stopMove()" class="btn btn-danger radius size-M right" style="width:180px">
+              <p style="margin-top:-8px">停止  <font size="5">■</font><p>
+
+              </button>
+        </td>
+      </tr>
+
+    </table>
+
+  </div>
+
+  <div id="realtimeInfo" style="background:#000000;width:200px;height:110px;border:2px solid grey;position:absolute;left:750px;top:40px" >
+
+  <p style="color:#7CFC00">
+    <label>当前开度：？？？米</label> <br/>
+    <label>瞬时流量：？？？立方／秒</label> <br/>
+    <label>闸前水位：？？？米</label> <br/>
+    <label>闸后水位：？？？米</label> <br/>
+
+    <label id="btnShowDetail" @click="showDetail()" >▶︎</label>
+    <span id="detailInfo" style="color:#7CFC00;display:none">
+    ------------------------------<br/>
+      <label>输出电流：？？？A</label> <br/>
+      <label>电池电压：？？？V</label> <br/>
+      <label>电机运行时间：？？？H</label> <br/>
+      <label>电机累计运行时间：？？？H</label> <br/>
+    </span>
+  </p>
+
+  </div>
+</div>
+
+  <div style="position:absolute;left:260px;top:0px">
+      <canvas id="c" width="450" height="350" border="1" >
+
+      </canvas>
+  </div>
+
+<script type="text/javascript" src="../lib/jquery/1.9.1/jquery.min.js"></script>
+<script type="text/javascript" src="../static/h-ui/js/H-ui.min.js"></script>
+<script type="text/javascript" src="../lib/layer/2.4/layer.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/2.3.6/fabric.min.js"></script>
+
+
+<script type="text/javascript" src="common/constant.js"></script>
+<script type="text/javascript" src="common/common.js"></script>
+<script type="text/javascript" src="control.js?v=34"></script>
+</body>
+</html>
+
+
+<script>
+
+var baseColor = '#4a708b';
+var doorColor = '#c0c0c0';
+var skyColor = '#F0F8FF';
+
+
+var clonedPoints = function(points) {
+  return points.map(function(o){
+    return fabric.util.object.clone(o);
+  });
+}
+
+var getPolygon = function(points, l, t, f) {
+  return  new fabric.Polygon(clonedPoints(points), {
+    left: l,
+    top: t,
+    fill: f,
+    selectable: true,
+    objectCaching: false,
+  });
+}
+
+var canvas = this.__canvas = new fabric.StaticCanvas('c');
+
+var points0 = [
+  {x: 0, y: 350},
+  {x: 500, y: 350},
+  {x: 500, y: 0},
+  {x: 0, y: 0}
+];
+
+var pointsA = [
+  {x: 0, y: 150},
+  {x: 100, y: 150},
+  {x: 100, y: 0},
+  {x: 70, y: 0}
+];
+var pointsB = [
+  {x: 100, y: 150},
+  {x: 0, y: 150},
+  {x: 0, y: 0},
+  {x: 30, y: 0}
+];
+var pointsC = [
+  {x: 0, y: 100},
+  {x: 10, y: 100},
+  {x: 10, y: 0},
+  {x: 0, y: 0}
+];
+var pointsD = [
+  {x: 0, y: 100},
+  {x: 10, y: 100},
+  {x: 10, y: 0},
+  {x: 0, y: 0}
+];
+
+var pointsE = [
+  {x: 0, y: 10},
+  {x: 280, y: 10},
+  {x: 280, y: 0},
+  {x: 0, y: 0}
+];
+
+
+canvas.add(getPolygon(points0, 0, 0,skyColor));
+canvas.add(getPolygon(pointsA, 50, 150,baseColor));
+canvas.add(getPolygon(pointsB, 300+50, 150, baseColor));
+canvas.add(getPolygon(pointsC, 80+50, 50, baseColor));
+canvas.add(getPolygon(pointsD, 310+50, 50, baseColor));
+canvas.add(getPolygon(pointsE, 60+50, 40, baseColor));
+
+var startPoints;
+var doorPloygon;
+initDoor();
+
+// setTimeout("moveDoor(4)", 2000);
+
+// h:米
+function initDoor() {
+  app.openHeight = 1;
+  var hpx = calcHpx(app.openHeight);
+
+ startPoints = [
+    {x: 0, y: 0},
+    {x: 200, y: 0},
+    {x: 200, y: -(hpx-5)},
+    {x: 195, y: -hpx},
+    {x: 5, y: -hpx},
+    {x: 0, y: -(hpx-5)}
+  ];
+
+  doorPloygon = getPolygon(startPoints, 150, 270, doorColor);
+
+  canvas.add(doorPloygon);
+
+  setTextLabel();
+}
+
+function calcHpx(h) {
+  return h*(150/5);
+}
+
+function moveDoor(h) {
+  var hpx = calcHpx(h);
+
+  var endPoints = [
+     {x: 0, y: 0},
+     {x: 200, y: 0},
+     {x: 200, y: -(hpx-5)},
+     {x: 195, y: -hpx},
+     {x: 5, y: -hpx},
+     {x: 0, y: -(hpx-5)}
+   ];
+   // doorPloygon.top= doorPloygon;
+   for (var i = 0, len = startPoints.length; i < len; i++) {
+      animatePoint(i, 'x', endPoints);
+      animatePoint(i, 'y', endPoints);
+    }
+    setTextLabel();
+    startPoints = endPoints;
+}
+
+
+
+function animatePoint(i, prop, endPoints) {
+    fabric.util.animate({
+      startValue: doorPloygon.points[i][prop],
+      endValue: endPoints[i][prop],
+      duration: 1000,
+      onChange: function(value) {
+        doorPloygon.points[i][prop] = value;
+        // only render once
+        if (i === startPoints.length - 1 && prop === 'y') {
+          canvas.renderAll();
+        }
+      },
+      onComplete: function() {
+        doorPloygon.setCoords();
+
+      }
+    });
+  }
+
+  var oldText;
+  function setTextLabel() {
+    var itext = new fabric.IText(app.openHeight + "米", {
+    	left: 230,
+    	top: 300 - calcHpx(app.openHeight)+5,
+    	fill: '#D81B60',
+    	strokeWidth: 1,
+    	stroke: "#880E4F",
+      fontSize: 10,
+    });
+    canvas.add(itext);
+
+    canvas.remove(oldText);
+    oldText = itext;
+    app.oldHeight = app.openHeight;
+  }
+
+
+</script>
