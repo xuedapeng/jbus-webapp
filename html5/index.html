@@ -61,19 +61,18 @@
 		<template v-for="(branch, i) in branchDeviceList">
 			<dl :id="'dl_'+branch.branchId">
 				<dt>
-					<i class="Hui-iconfont">&#xe708;</i>{{branch.branchName}}
+					<i class="Hui-iconfont">&#xe625;</i> {{branch.branchName}}
 				</dt>
 				<dd>
 					<ul>
 						<template v-for="(device, j) in branch.deviceList" >
-							<li valign="bottom">
-								<a :id="device.deviceSn" :data-href="'app/control.html?deviceSn='+device.deviceSn" :data-title="device.deviceName" href="javascript:void(0)" >
-									<i class="Hui-iconfont" style="font-size:1em;color:#0c0">
+							<li>
+								<a :id="device.deviceSn" :data-href="'app/control.html?deviceSn='+device.deviceSn+'&deviceName='+device.deviceName" :data-title="device.deviceName" href="javascript:void(0)" >
+									<!-- <i class="Hui-iconfont" style="font-size:1em;color:#0c0">
 										&#xe601;
-									</i>
-									<i class="Hui-iconfont" style="font-size:1em;color:grey">
-										{{ device.privilege=='view'?'&#xe665;':'&#xe63c;' }}
-
+									</i> -->
+									<i :id="'icon_' + device.deviceSn" class="Hui-iconfont deviceIcon" style="font-size:1em;color:#0c0">
+										{{ device.privilege=='view'?'&#xe665;':'&#xe61d;' }}
 									</i>
 										{{device.deviceName}}
 								</a>
@@ -124,81 +123,9 @@
 <script type="text/javascript" src="static/h-ui.admin/js/H-ui.admin.js"></script>
 <script type="text/javascript" src="lib/jquery.contextmenu/jquery.contextmenu.r2.js"></script>
 
-<script type="text/javascript" src="app/common/constant.js?v=6"></script>
+<script type="text/javascript" src="app/common/constant.js?v=9"></script>
 <script type="text/javascript" src="app/common/common.js"></script>
-<script type="text/javascript">
-$(function(){
-		if (!checkAuth) {
-				moveToLogin();
-		}
-});
-
-window.onload = function() {
-  getData();
-}
-
-var app = new Vue({
-  el: '#app',
-  data: {
-		account:localStorage.account,
-		nickName:localStorage.nickName,
-		isSysAdmin:localStorage.isSysAdmin,
-		isBranchAdmin:localStorage.isBranchAdmin,
-		title: G_LABEL_APP_TITLE,
-		branchDeviceList:[],
-	},
-	methods:{
-		logout:function(){
-			localStorage.clear();
-			moveToLogin();
-		}
-	}
-});
-
-
-
-function getData() {
-
-    if (!checkAuth()) {
-       return;
-    }
-
-    var param = {"method":"devman.mydevice.list",
-                "auth":[localStorage.secretId, localStorage.secretKey],
-                };
-
-    ajaxPost(G_API_URL, param,
-      function(response){
-
-        if (response.status<0) {
-          layer.msg(response.msg, {icon:2,time:1000});
-          return;
-        }
-
-        app.branchDeviceList = response.result;
-
-				setTimeout("makeMenuEnable()", 1000);
-    });
-}
-
-function makeMenuEnable() {
-	$(".Hui-aside").on("click",".menu_dropdown dd li a",function(){
-		if($(window).width()<768){
-			$(".Hui-aside").slideToggle();
-		}
-	});
-	/*左侧菜单*/
-	$(".Hui-aside").Huifold({
-		titCell:'.menu_dropdown dl dt',
-		mainCell:'.menu_dropdown dl dd',
-	});
-
-	/*选项卡导航*/
-	$(".Hui-aside").on("click",".menu_dropdown a",function(){
-		Hui_admin_tab(this);
-	});
-}
-</script>
+<script type="text/javascript" src="index.js?v=10"></script>
 
 </body>
 </html>

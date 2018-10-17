@@ -66,6 +66,24 @@ public class DeviceDao extends BaseZDao {
 		return new ArrayList<DeviceEntity>();
 
 	}
+
+	@SuppressWarnings("unchecked")
+	public List<DeviceEntity> findAll() {
+
+		StringBuffer queryString = new StringBuffer();
+		queryString.append("from DeviceEntity");
+		
+		Query query = getEntityManager().createQuery(queryString.toString());
+		
+		List<DeviceEntity> list = (List<DeviceEntity>)query.getResultList();
+		
+		if(list != null && list.size() > 0){
+			return list;
+		}
+		
+		return new ArrayList<DeviceEntity>();
+
+	}
 	
 	
 }

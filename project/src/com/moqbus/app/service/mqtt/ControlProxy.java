@@ -8,6 +8,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+
+import javax.persistence.EntityManager;
 
 import org.apache.log4j.Logger;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -18,9 +21,13 @@ import com.moqbus.app.common.helper.HexHelper;
 import com.moqbus.app.common.helper.JsonHelper;
 import com.moqbus.app.common.utils.CrcTool;
 import com.moqbus.app.common.utils.GateTool;
+import com.moqbus.app.db.bean.DeviceEntity;
+import com.moqbus.app.db.dao.DeviceDao;
+import com.moqbus.app.service.DataSaverService;
 
 import fw.jbiz.ext.json.ZGsonObject;
 import fw.jbiz.ext.websocket.ZWsHandlerManager;
+import fw.jbiz.logic.ZDbProcessor;
 import fw.jbiz.logic.interfaces.IResponseObject;
 
 public class ControlProxy {
@@ -33,7 +40,7 @@ public class ControlProxy {
 	// deviceSn, List<wsSessionId>
 	static Map<String, List<String>> _deviceSn2WsSessionIdsMap = new ConcurrentHashMap<String, List<String>>();
 	static List<CmdCallback> _cmdCallbackList = new ArrayList<CmdCallback>();
-	static String _lastCmdPre = "";
+	static List<String> _allDeviceSnList = new ArrayList<String>();
 	
 	public static void cmdOpen(String deviceSn, Integer height) {
 
@@ -74,29 +81,24 @@ public class ControlProxy {
 
 	public static void cmdStop(String deviceSn) {
 		
-		// todo:取消开闸、流控、总控
-		
-		byte[] cmd = {}; 
+		// 紧急停止
+
+		byte[] _cmd = GateCmd.STOP();
+		String _topic = JbusConst.TOPIC_PREFIX_CMD + deviceSn;
+		MqttProxy.publish(_topic, _cmd);
 		
 		log.info(String.format("cmdStop:deviceSn=%s", deviceSn));
 	}
 
 	public static void cmdQueryStatus(String deviceSn) {
 
-		try {
-			// get height
-			_lastCmdPre = GateCmd.PRE_GET_HEIGHT;
-			MqttProxy.publish(JbusConst.TOPIC_PREFIX_CMD + deviceSn, GateCmd.GET_HEIGHT());
-			Thread.sleep(10000);
-			
-			// instant flow
-			_lastCmdPre = GateCmd.PRE_GET_FLOW;
-			MqttProxy.publish(JbusConst.TOPIC_PREFIX_CMD + deviceSn, GateCmd.GET_FLOW());
-			Thread.sleep(10000);
+		// get info
+		MqttProxy.publish(JbusConst.TOPIC_PREFIX_CMD + deviceSn, GateCmd.GET_INFO());
+		
+		// 订阅在线状态和数据
+		MqttProxy.subscribe(JbusConst.TOPIC_PREFIX_STS + deviceSn);
+		MqttProxy.subscribe(JbusConst.TOPIC_PREFIX_DAT + deviceSn);
 
-		} catch (InterruptedException e) {
-			log.error("", e);
-		}
 	}
 	
 	public static void receiveDat(String topic, byte[] data) {
@@ -112,11 +114,11 @@ public class ControlProxy {
 		IResponseObject response = new ZGsonObject();
 		try {
 			response.add("topicType", topicType)
-				.add("deviceSn", deviceSn)
+				.add("deviceSn", deviceSn)	
 				.add("data", 
 						topicType.equals(JbusConst.TOPIC_PREFIX_STS)
 							? JsonHelper.json2map(new String(data, "UTF-8"))
-							: GateData.decodeData(data, _lastCmdPre)
+							: GateData.decodeData(data)
 					);
 		} catch (UnsupportedEncodingException e) {
 			log.error("", e);
@@ -164,9 +166,13 @@ public class ControlProxy {
 			log.info("after: _cmdCallbackList.size=" + _cmdCallbackList.size());
 		}
 			
-		
-		
-		ZWsHandlerManager.send(response, _deviceSn2WsSessionIdsMap.get(deviceSn));
+		// 保存数据
+		DataSaverService.save(JsonHelper.json2map(response.toString()));
+		// 推送前端
+		List<String> sessionIdList = _deviceSn2WsSessionIdsMap.get(deviceSn);
+		if (sessionIdList != null) {
+			ZWsHandlerManager.send(response, sessionIdList);
+		}
 	}
 	
 	public static void regWsClient(String wsSessionId, String deviceSn) {
@@ -177,15 +183,16 @@ public class ControlProxy {
 			_deviceSn2WsSessionIdsMap.get(deviceSn).add(wsSessionId);
 		}
 		
+		// 立即查询状态数据
+		cmdQueryStatus(deviceSn);
 		// 订阅在线状态和数据
-
-		MqttProxy.subscribe(JbusConst.TOPIC_PREFIX_STS + deviceSn);
-		MqttProxy.subscribe(JbusConst.TOPIC_PREFIX_DAT + deviceSn);
+//		MqttProxy.subscribe(JbusConst.TOPIC_PREFIX_STS + deviceSn);
+//		MqttProxy.subscribe(JbusConst.TOPIC_PREFIX_DAT + deviceSn);
 		
-		if (!serviceRunning) {
-			serviceRunning = true;
-			queryStatusService();
-		}
+//		if (!serviceRunning) {
+//			serviceRunning = true;
+//			queryStatusService();
+//		}
 		
 	}
 
@@ -201,40 +208,78 @@ public class ControlProxy {
 	}
 	
 	// 轮询设备数据与状态
-	private static void queryStatusService() {
+	public static void queryAndSubscribeService() {
 		
-		new Thread() {
-
-			@Override
-			public void run() {
-
-				while(true) {
-					try {
-						Thread.sleep(5000);
-						
-					} catch (InterruptedException e) {
-						log.error("", e);
+		int count = 0;
+		Date lastTime = new Date();
+		while(true) {
+			log.info("count="+count);
+			try {
+//				Thread.sleep(10000); // 每10秒查询一次最新信息 
+				for (int i = 0; i<10; i++) {
+					Thread.sleep(1000);
+					Date nowDate = new Date();
+					if (nowDate.getTime()/1000 - lastTime.getTime()/1000 >= 10) {
+						lastTime = nowDate;
+						break;
 					}
-
-					log.info("_deviceSn2WsSessionIdsMap.size="+ _deviceSn2WsSessionIdsMap.size());
-					_deviceSn2WsSessionIdsMap.forEach((K, V) -> {
-						cmdQueryStatus(K);
-					});
-					
 				}
 				
+			} catch (InterruptedException e) {
+				log.error("", e);
 			}
 			
-		}.start();
+
+			log.info("count%10==0:"+(count%10==0));
+			if(count%10 == 0) {
+				log.info("refreshDeviceSnList start");
+				refreshDeviceSnList();
+			}
+			
+			for (String deviceSn: _allDeviceSnList) {
+				log.info("cmdQueryStatus:" + deviceSn);
+				try {
+					cmdQueryStatus(deviceSn);
+				} catch(Exception e) {
+					log.error(e.getMessage(), e);
+				}
+			}
+			
+			if (count > 1000) {
+				count = 0;
+			} else {
+				count++;
+			}
+		}
+	}
+	
+	private static void refreshDeviceSnList() {
+		new ZDbProcessor() {
+
+			@Override
+			public void execute(EntityManager em) {
+				DeviceDao dao = new DeviceDao(em);
+				_allDeviceSnList = dao.findAll().stream().map(DeviceEntity::getDeviceSn).collect(Collectors.toList());
+				
+				_allDeviceSnList.clear();
+				List<DeviceEntity> list = dao.findAll();
+
+				for (DeviceEntity device: list) {
+					_allDeviceSnList.add(device.getDeviceSn());
+				}
+				
+				log.info("_allDeviceSnList.size="+_allDeviceSnList.size());
+			}
+		}.run();
 	}
 	
 	public static void reSubscribe() {
 
-		_deviceSn2WsSessionIdsMap.forEach((K, V) -> {
-
-			MqttProxy.subscribe(JbusConst.TOPIC_PREFIX_STS + K);
-			MqttProxy.subscribe(JbusConst.TOPIC_PREFIX_DAT + K);
-		});
+//		_deviceSn2WsSessionIdsMap.forEach((K, V) -> {
+//
+//			MqttProxy.subscribe(JbusConst.TOPIC_PREFIX_STS + K);
+//			MqttProxy.subscribe(JbusConst.TOPIC_PREFIX_DAT + K);
+//		});
 	}
 	
 }

@@ -12,6 +12,7 @@
 <script type="text/javascript" src="../lib/jquery/1.9.1/jquery.min.js"></script>
 <script type="text/javascript" src="../static/h-ui/js/H-ui.min.js"></script>
 <script type="text/javascript" src="../lib/layer/2.4/layer.js"></script>
+<script type="text/javascript" src="../lib/echarts/echarts.min.js"></script>
 
 <link rel="stylesheet" type="text/css" href="../static/h-ui/css/H-ui.min.css" />
 <link rel="stylesheet" type="text/css" href="../static/h-ui.admin/css/H-ui.admin.css" />
@@ -28,15 +29,20 @@
 
 .cmdDiv {padding: 10px 0 10px 20px}
 .doorFrame {
-    background-image:url(../static/img/doorFrame_.png);
+    background-image:url(../static/img/doorFrame.png);
     background-size:600px 400px;
     background-repeat: no-repeat;
     background-color:#F0F8FF;
   }
 .doorDiv {
-  background-image:url(../static/img/door_.png);
+  background-image:url(../static/img/door.png);
   background-repeat: no-repeat;
   background-position: bottom center;
+}
+.waterDiv {
+background-image:url(../static/img/water.png);
+background-repeat: no-repeat;
+background-position: bottom center;
 }
 
 .infoLeft {
@@ -67,21 +73,21 @@
           <table style="border-right: 10px solid #fff;" >
             <tr>
               <td style="width:80px;" class="control">
-                <button onclick="openControl()" class="btn btn-primary-outline radius center">
+                <button onclick="openControl()" class="btn btn-primary-outline radius center" >
                   开度控制
                 </button>
               </td>
             </tr>
             <tr>
               <td style="width:80px;" class="control">
-                <button onclick="flowControl()" class="btn btn-primary-outline radius center">
+                <button onclick="flowControl()" class="btn btn-primary-outline radius center disabled">
                   流量控制
                 </button>
               </td>
             </tr>
             <tr>
               <td style="width:80px;" class="control">
-                <button onclick="totolControl()" class="btn btn-primary-outline radius center">
+                <button onclick="totolControl()" class="btn btn-primary-outline radius center disabled">
                   总量控制
                 </button>
               </td>
@@ -102,7 +108,7 @@
             </tr>
             <tr>
               <td style="width:80px;" class="control">
-                <button onclick="troubleAlert()" class="btn btn-primary-outline radius center">
+                <button onclick="troubleAlert()" class="btn btn-primary-outline radius center disabled">
                   故障报警
                 </button>
               </td>
@@ -110,26 +116,34 @@
 
           </table>
       </td>
-      <td style="border-right: 10px solid #EDEDED;border-left: 10px solid #EDEDED;width:600px">
+      <td style="border-right: 10px solid #EDEDED;border-left: 10px solid #EDEDED;width:600px" valign="top">
         <table style="border-left: 10px solid #fff;border-right: 10px solid #fff;" >
           <tr>
             <td  class="doorFrame" style="height:400px;width:600px;vertical-align:top;text-align:center">
-              <div style="margin-top:22px" >
-                <h4 style="color:#FFFFFF;font-weight:bold" >
-                  {{doorName}}
-                  <img src="../static/img/signal_green.svg" />
-                </h4>
-
+              <div style="margin-top:25px" >
+                      <h4 style="color:#FFFFFF;font-weight:bold" >
+                        {{doorName}}
+                      </h4>
+              </div>
+              <div style="position:absolute;left:670px;top:50px;">
+                <img v-if="online" src="../static/img/signal_green.svg?v=4" />
+                <img v-if="!online" src="../static/img/signal_grey.svg?v=7" />
               </div>
               <div style="position:absolute;left:191px;top:240px;width:372px;height:140px;border: 0px solid #f00;">
                   <div id="doorLabel" style="position:absolute;left:275px;top:110px;color:red;font-weight:bold">
                     <label>{{realHeight}} m</label>
                   </div>
-                  <div class="doorDiv" style="position:absolute;left:137px;top:130px;width:319px;height:10px;border: 0px solid #00f;">
-
+                  <div class="doorDiv" style="position:absolute;left:136px;top:130px;width:319px;height:10px;border: 0px solid #00f;">
+                  </div>
+                  <div class="waterDiv" style="position:absolute;left:-1px;top:140px;width:119px;height:10px;border: 0px solid #00f;">
+                      <img id="img_waterflow" src="../static/img/water.png" width="580px" height="40px"/>
                   </div>
               </div>
             </td>
+          </tr>
+          <tr>
+              <td>
+              </td>
           </tr>
         </table>
       </td>
@@ -171,7 +185,14 @@
                   <td class="infoLeft" colspan="2">
                     现场图片：
                     <div>
-                      <img  style="width:200px" src="../static/img/doorFrame_.png" />
+                      <img  style="width:200px" src="../static/img/doorFrame.png" />
+                    </div>
+                  </td>
+              </tr>
+              <tr>
+                  <td class="infoLeft" colspan="2" valign="top">
+                    瞬时流量过程线：
+                    <div id="flowGraph" style="width:250px;height:180px; margin-top:-50px" >
                     </div>
                   </td>
               </tr>
@@ -181,18 +202,6 @@
 
 
   </table>
-
-  <br/><br/><br/><br/><br/>
-  <div id="simulator" style="display:block">
-      闸门开度<input v-model="realHeight" type="text" class="input-text  size-S"  style="width:50px" placeholder="闸门开度"/>
-      瞬时流量<input v-model="instantFlow" type="text" class="input-text  size-S"  style="width:50px" placeholder="瞬时流量"/>
-      闸前水位<input v-model="frontWaterline" type="text" class="input-text  size-S"  style="width:50px" placeholder="闸前水位"/>
-      闸后水位<input v-model="backWaterline" type="text" class="input-text  size-S"  style="width:50px" placeholder="闸后水位"/>
-      输出电流<input v-model="electricCurrent" type="text" class="input-text  size-S"  style="width:50px" placeholder="输出电流"/>
-      输出电压<input v-model="electricVoltage" type="text" class="input-text  size-S"  style="width:50px" placeholder="输出电压"/>
-      电机运行时间<input v-model="runningTime" type="text" class="input-text  size-S"  style="width:50px" placeholder="电机运行时间"/>
-      电机累计运行时间<input v-model="totalRunningTime" type="text" class="input-text  size-S"  style="width:50px" placeholder="电机累计运行时间"/>
-  </div>
 
     <div id="modal-openControl" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
     	<div class="modal-dialog">
@@ -213,10 +222,63 @@
     		</div>
     	</div>
     </div>
+
+    <div id="modal-deviceInfo" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" >
+    	<div class="modal-dialog">
+    		<div class="modal-content radius">
+    			<div class="modal-header" style="height:20px;margin-top:-15px;">
+    				<h3 class="modal-title">设备信息</h3>
+    				<a class="close" data-dismiss="modal" aria-hidden="true" href="javascript:void();">×</a>
+    			</div>
+    			<div class="modal-body">
+            <table>
+              <tr>
+                <td width="80px">当前闸位：</td>
+                <td width="50px">{{realHeight}} </td>
+                <td width="100px">米</td>
+                <td width="100px">输出电流：</td>
+                <td width="50px">{{electricCurrent}} </td>
+                <td width="100px"> A</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>设定闸位：</td>
+                <td>{{expectHeight}} </td>
+                <td> 米</td>
+                <td>电池电压：</td>
+                <td>{{electricVoltage}} </td>
+                <td> V</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>瞬时流量：</td>
+                <td>{{instantFlow}} </td>
+                <td> 立方米／秒</td>
+                <td>累积运行时间：</td>
+                <td colspan="2">{{totalRunningTime}} </td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>累积流量：</td>
+                <td>{{totalFlow}} </td>
+                <td> 立方米</td>
+                <td></td>
+                <td></td>
+                <td></td>
+              </tr>
+            </table>
+    			</div>
+    			<div class="modal-footer">
+    				<button class="btn" data-dismiss="modal" aria-hidden="true">关闭</button>
+    			</div>
+    		</div>
+    	</div>
+    </div>
+
 </div>
 
-<script type="text/javascript" src="common/constant.js?v=6"></script>
-<script type="text/javascript" src="common/common.js?v=6"></script>
-<script type="text/javascript" src="control.js?v=40"></script>
+<script type="text/javascript" src="common/constant.js?v=9"></script>
+<script type="text/javascript" src="common/common.js?v=7"></script>
+<script type="text/javascript" src="control.js?v=100"></script>
 </body>
 </html>

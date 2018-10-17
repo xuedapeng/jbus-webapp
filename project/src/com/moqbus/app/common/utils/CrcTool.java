@@ -31,12 +31,12 @@ public class CrcTool {
     
     public static byte[] appendModbusCRC16(byte[] bytes) {
     	return HexHelper.hexStringToBytes(
-    			HexHelper.bytesToHexString(bytes) + getModbusCRC16(bytes));
+    			HexHelper.bytesToHexString(bytes) + HexHelper.reverseBit(getModbusCRC16(bytes)));
     	
     }
     
     public static void main(String[] args) {
-    	String s = "01 03 10 04 00 02";
+    	String s = "01 03 06 14 00 08";
     	byte[] b = HexHelper.hexStringToBytes(s);
     	System.out.println(HexHelper.bytesToHexString(appendModbusCRC16(b)));
     }

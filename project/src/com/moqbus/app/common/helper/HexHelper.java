@@ -1,5 +1,7 @@
 package com.moqbus.app.common.helper;
 
+import org.apache.commons.lang3.StringUtils;
+
 public class HexHelper {
 
 	/**
@@ -54,6 +56,17 @@ public class HexHelper {
     	}
     	
     	return String.format("%4s", Integer.toHexString(v)).replaceAll(" ", "0");
+    	
+    }
+    
+    // 高低位反转
+    public static String reverseBit(String n4char) {
+    	n4char = n4char.replace(" ", "");
+    	if (n4char.length() != 4) {
+    		return "FFFF";
+    	}
+    	
+    	return n4char.substring(2, 4) + n4char.substring(0,2);
     	
     }
 

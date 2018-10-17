@@ -17,6 +17,12 @@
     <servlet-name>JAX-RS Servlet</servlet-name>
     <url-pattern>/api/*</url-pattern>
   </servlet-mapping>
+  
+	<servlet>
+		<servlet-name>initStart</servlet-name>
+		<servlet-class>com.moqbus.app.service.ServiceServlet</servlet-class>
+		<load-on-startup>2</load-on-startup>
+	</servlet>
   <filter>
     <filter-name>crossDomainFilter</filter-name>
     <filter-class>com.moqbus.app.action.MyCrossDomainFilter</filter-class>

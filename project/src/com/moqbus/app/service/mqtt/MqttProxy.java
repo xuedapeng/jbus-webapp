@@ -29,7 +29,7 @@ public class MqttProxy {
 	
 	
 	static {
-		init();
+//		init();
 	}
 	
 	public static void init() {
@@ -98,25 +98,33 @@ public class MqttProxy {
 	
 	public static void publish(String topic, byte[] data) {
 		try {
-			
-			_mqttClient.publish(topic, new MqttMessage(data));
-			
+
 			log.info(
-					String.format("publish:topic=%s, data=[%s]", 
+					String.format("before:publish:topic=%s, data=[%s]", 
 							topic, 
 							HexHelper.bytesToHexString(data)));
 			
-		} catch (MqttException e) {
-			log.error("", e);
+			MqttMessage mm = new MqttMessage(data);
+			mm.setQos(0);
+			_mqttClient.publish(topic, mm);
+			
+			log.info(
+					String.format("after:publish:topic=%s, data=[%s]", 
+							topic, 
+							HexHelper.bytesToHexString(data)));
+			
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
 		}
 	}
 
 	public static void subscribe(String topic) {
 		try {
+			log.info("before:subscribe:topic=" + topic);
 			_mqttClient.subscribe(topic);
-			log.info("subscribe:topic=" + topic);
-		} catch (MqttException e) {
-			log.error("", e);
+			log.info("after:subscribe:topic=" + topic);
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
 		}
 		
 	}
@@ -153,7 +161,9 @@ public class MqttProxy {
         while(!mqttClient.isConnected()) {
         	log.info("waiting for connect...");
         }
-        
+        // 超时设定
+        mqttClient.setTimeToWait(1000);
+
         return mqttClient;  
 	}
 	

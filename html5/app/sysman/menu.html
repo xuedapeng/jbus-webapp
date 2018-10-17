@@ -54,7 +54,7 @@
         <span v-if="isFolder"  @click="toggle">{{ open ? '-' : '+' }}</span>
         <span v-if="model.type=='user' || model.type=='device'">
           <i class="Hui-iconfont">
-            {{ model.type=='user'?'&#xe62c;':'&#xe66a;' }}
+            {{ model.type=='user'?'&#xe62c;':'&#xe6ff;' }}
           </i>
         </span>
         <span   @click="showDetail"  :id="model.type+'_'+model.id" class="needContextMenu">
@@ -64,7 +64,7 @@
 
       </span>
     </div>
-    <ul v-show="open" v-if="isFolder">
+    <ul v-show="open" v-if="isFolder" style="list-style-type:none;">
       <item
         class="item"
         v-for="(model, index) in model.children"
@@ -76,7 +76,7 @@
 
 
 <!-- the demo root element -->
-<ul id="menu">
+<ul id="menu" style="list-style-type:none;">
   <item
     class="item"
     :model="treeData">

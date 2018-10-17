@@ -59,7 +59,12 @@ public class MyDeviceListLogic extends BaseZLogic {
 				deviceEntityList.forEach((d)->{
 					Map<String, Object> deviceMap = new HashMap<String, Object>();
 					deviceMap.put("deviceId", d.getId());
+					deviceMap.put("deviceSn", d.getDeviceSn());
 					deviceMap.put("deviceName", d.getDeviceName());
+					deviceMap.put("location", d.getLocation());
+					deviceMap.put("latitude", d.getLatitude());
+					deviceMap.put("longitude", d.getLongitude());
+					deviceMap.put("description", d.getDescription());
 					
 					// 系统管理员
 					if (_loginUser.getRole().equals(StatusConst.USER_ROLE_SYS_ADMIN)) {
